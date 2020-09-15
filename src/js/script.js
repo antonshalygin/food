@@ -12,7 +12,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         tabs.forEach(item => {
             item.classList.remove('tabheader__item_active')
-        })
+        });
     }
 
     function showTabContent(i = 0) {
@@ -176,24 +176,28 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    const getResource = async (url) => {
-        const res = await fetch(url);
+    // const getResource = async (url) => {
+    //     const res = await fetch(url);
         
-        if(!res.ok) {
-            throw new Error(`Could not fetch ${url}, status: ${res.status}`);
-        }
+    //     if(!res.ok) {
+    //         throw new Error(`Could not fetch ${url}, status: ${res.status}`);
+    //     }
 
-        return await res.json();
-    };
+    //     return await res.json();
+    // };
 
     // getResource('http://localhost:3000/menu')
     //     .then(data => {
-    //         data.forEach(({img, altimg, title, descr, price}) => {
-    //             new MenuCard(img, altimg, title, descr, price, '.menu .container').render();
+            // data.forEach(({img, altimg, title, descr, price}) => {
+            //     new MenuCard(img, altimg, title, descr, price, '.menu .container').render();
     //         });
     //     });
     axios.get('http://localhost:3000/menu')
-        .then(data => console.log(data));
+        .then(data => {
+            data.data.forEach(({img, altimg, title, descr, price}) => {
+                new MenuCard(img, altimg, title, descr, price, '.menu .container').render();
+            });
+        });
 
     //FORMS
     const forms = document.querySelectorAll('form');
@@ -274,4 +278,113 @@ window.addEventListener('DOMContentLoaded', () => {
 
     fetch('http://localhost:3000/menu')
         .then(data => data.json());
+
+            
+    // SLIDER
+    const nextSlide = document.querySelector('.offer__slider-next'),
+          prevSlide = document.querySelector('.offer__slider-prev'),
+          currentSliderId = document.querySelector('#current'),
+          totalSlidesCount = document.querySelector('#total'),
+          slides = document.querySelectorAll('.offer__slide'),
+          slidesWrapper = document.querySelector('.offer__slider-wrapper'),
+          slidesField = document.querySelector('.offer__slider-inner'),
+          width = window.getComputedStyle(slidesWrapper).width;
+    let slideIndex = 1;
+    let offset = 0;
+
+    if(slides.length < 10) {
+        totalSlidesCount.textContent = `0${slides.length}`;
+        currentSliderId.textContent = `0${slideIndex}`;
+    } else {
+        totalSlidesCount.textContent = slides.length;
+        currentSliderId.textContent = slideIndex;
+    }
+
+    slidesField.style.width = 100 * slides.length + '%';
+    slidesField.style.display = 'flex';
+    slidesField.style.transition = '0.5s all';
+
+    slidesWrapper.style.overflow = 'hidden';
+    
+    slides.forEach(slide => {
+        slide.style.width = width;
+    });
+
+    nextSlide.addEventListener('click', () => {
+        if (offset == +width.slice(0, width.length - 2) * (slides.length - 1)) {
+            offset = 0;
+        } else {
+            offset += +width.slice(0, width.length - 2);
+        }
+
+        slidesField.style.transform = `translateX(-${offset}px)`;
+
+        if(slideIndex == slides.length) {
+            slideIndex = 1;
+        } else {
+            slideIndex++;
+        }
+
+        if(slides.length < 10) {
+            currentSliderId.textContent = `0${slideIndex}`;
+        } else {
+            currentSliderId.textContent = slideIndex;
+        }
+    });
+
+    prevSlide.addEventListener('click', () => {
+        if (offset == 0) {
+            offset = +width.slice(0, width.length - 2) * (slides.length - 1);
+        } else {
+            offset -= +width.slice(0, width.length - 2);
+        }
+
+        slidesField.style.transform = `translateX(-${offset}px)`;
+
+        if(slideIndex == 1) {
+            slideIndex = slides.length;
+        } else {
+            slideIndex--;
+        }
+
+        if(slides.length < 10) {
+            currentSliderId.textContent = `0${slideIndex}`;
+        } else {
+            currentSliderId.textContent = slideIndex;
+        }
+    });
+
+    // function showSlides(n){
+        // if (n > slides.length) {
+        //     slideIndex = 1;
+        // }
+
+        // if (n < 1) {
+        //     slideIndex = slides.length;
+        // }
+
+    //     slides.forEach(item => item.style.display = 'none');
+
+    //     slides[slideIndex - 1].style.display = 'block';
+
+    //     if(slideIndex < 10){
+    //         currentSliderId.textContent = `0${slideIndex}`;
+    //     } else {
+    //         currentSliderId.textContent = slideIndex;
+    //     }
+    // }
+
+    // showSlides(slideIndex);
+
+    // function changeSlide(n){
+    //     showSlides(slideIndex += n); 
+    // }
+
+    // nextSlide.addEventListener('click', () => {
+    //     changeSlide(1);
+    // });
+
+    // prevSlide.addEventListener('click', () => {
+    //     changeSlide(-1);
+    // });
 });
