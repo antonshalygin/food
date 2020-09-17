@@ -37,7 +37,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     // TIMER
-    const deadline = '2020-09-20';
+    const deadline = '2020-10-20';
 
     function getTimeRemaining(endtime) {
         const t = Date.parse(endtime) - Date.parse(new Date()),
@@ -125,7 +125,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const modalTimerId = setTimeout(openModal, 30000);
+    const modalTimerId = setTimeout(openModal, 90000);
 
     function showModalByScroll() {
         if (window.pageYOffset + document.documentElement.clientHeight >= document.documentElement.scrollHeight -1) {
@@ -286,6 +286,7 @@ window.addEventListener('DOMContentLoaded', () => {
           currentSliderId = document.querySelector('#current'),
           totalSlidesCount = document.querySelector('#total'),
           slides = document.querySelectorAll('.offer__slide'),
+          slider = document.querySelector('.offer__slider'),
           slidesWrapper = document.querySelector('.offer__slider-wrapper'),
           slidesField = document.querySelector('.offer__slider-inner'),
           width = window.getComputedStyle(slidesWrapper).width;
@@ -310,81 +311,180 @@ window.addEventListener('DOMContentLoaded', () => {
         slide.style.width = width;
     });
 
+    slider.style.position = 'relative';
+
+	const dots = document.createElement('ol'),
+		  dotsArr = [];
+    dots.classList.add('carousel-dots');
+    dots.style.cssText = `
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 15;
+        display: flex;
+        justify-content: center;
+        margin-right: 15%;
+        margin-left: 15%;
+        list-style: none;
+    `;
+    slider.append(dots);
+
+    for (let i = 0; i < slides.length; i++) {
+		const dot = document.createElement('li');
+		dot.setAttribute('data-slide-to', i + 1);
+		dot.style.cssText = `
+			box-sizing: content-box;
+			flex: 0 1 auto;
+			width: 30px;
+			height: 6px;
+			margin-right: 3px;
+			margin-left: 3px;
+			cursor: pointer;
+			background-color: #fff;
+			background-clip: padding-box;
+			border-top: 10px solid transparent;
+			border-bottom: 10px solid transparent;
+			opacity: .5;
+			transition: opacity .6s ease;
+		`;
+		if (i == 0) {
+			dot.style.opacity = 1;
+		}
+		dots.append(dot);
+		dotsArr.push(dot);
+	};
+	
+	function setDotsOpacity() {
+		dotsArr.forEach(dot => dot.style.opacity = '.5');
+		dotsArr[slideIndex - 1].style.opacity = '1';
+	};
+
+	function checkZeroInSliderId() {
+		if (slides.length < 10) {
+            currentSliderId.textContent = `0${slideIndex}`;
+        } else {
+            currentSliderId.textContent = slideIndex;
+		}
+    };
+    
+    function deleteNotDigits(str) {
+        return +str.replace(/\D/g, '');
+    };
+
     nextSlide.addEventListener('click', () => {
-        if (offset == +width.slice(0, width.length - 2) * (slides.length - 1)) {
+        if (offset == deleteNotDigits(width) * (slides.length - 1)) {
             offset = 0;
         } else {
-            offset += +width.slice(0, width.length - 2);
+            offset += deleteNotDigits(width);
         }
 
         slidesField.style.transform = `translateX(-${offset}px)`;
 
-        if(slideIndex == slides.length) {
+        if (slideIndex == slides.length) {
             slideIndex = 1;
         } else {
             slideIndex++;
         }
 
-        if(slides.length < 10) {
-            currentSliderId.textContent = `0${slideIndex}`;
-        } else {
-            currentSliderId.textContent = slideIndex;
-        }
+		checkZeroInSliderId();
+		setDotsOpacity();
     });
 
     prevSlide.addEventListener('click', () => {
         if (offset == 0) {
-            offset = +width.slice(0, width.length - 2) * (slides.length - 1);
+            offset = deleteNotDigits(width) * (slides.length - 1);
         } else {
-            offset -= +width.slice(0, width.length - 2);
+            offset -= deleteNotDigits(width);
         }
 
         slidesField.style.transform = `translateX(-${offset}px)`;
 
-        if(slideIndex == 1) {
+        if (slideIndex == 1) {
             slideIndex = slides.length;
         } else {
             slideIndex--;
         }
 
-        if(slides.length < 10) {
-            currentSliderId.textContent = `0${slideIndex}`;
-        } else {
-            currentSliderId.textContent = slideIndex;
-        }
+		checkZeroInSliderId();
+		setDotsOpacity();
+	});
+	
+	dotsArr.forEach(dot => {
+		dot.addEventListener('click', (e) => {
+			const slideTo = e.target.getAttribute('data-slide-to');
+			slideIndex = slideTo;
+			offset = deleteNotDigits(width) * (slideTo - 1);
+			slidesField.style.transform = `translateX(-${offset}px)`;
+			
+			checkZeroInSliderId();
+			setDotsOpacity();
+		});
     });
+    
+    //CALC
+    const result = document.querySelector('.calculating__result span');
+    let sex = 'female', height, weight, age, ratio = 1.375;
 
-    // function showSlides(n){
-        // if (n > slides.length) {
-        //     slideIndex = 1;
-        // }
+    function calcTotal() {
+        if (!sex || !height || !weight || !age || !ratio) {
+            result.textContent = '____';
+            return;
+        }
+        
+        if (sex === 'female') {
+            result.textContent = Math.round((447.6 + (9.2 * weight) + (3.1 * height) - (4.3 * age)) * ratio);
+        } else {
+            result.textContent = Math.round((88.36 + (13.4 * weight) + (4.8 * height) - (5.7 * age)) * ratio);
+        }
+    }
 
-        // if (n < 1) {
-        //     slideIndex = slides.length;
-        // }
+    calcTotal();
 
-    //     slides.forEach(item => item.style.display = 'none');
+    function getStaticInformation(parentSelector, activeClass) {
+        const elements = document.querySelectorAll(`${parentSelector} div`);
 
-    //     slides[slideIndex - 1].style.display = 'block';
+        elements.forEach(elem => {
+            elem.addEventListener('click', (e) => {
+                if (e.target.getAttribute('data-ratio')) {
+                    ratio = +e.target.getAttribute('data-ratio');
+                } else {
+                    sex = e.target.getAttribute('id');
+                }
+    
+                elements.forEach(elem => {
+                    elem.classList.remove(activeClass);
+                });
+    
+                e.target.classList.add(activeClass);
+                calcTotal();
+            });
+        });
+    }
 
-    //     if(slideIndex < 10){
-    //         currentSliderId.textContent = `0${slideIndex}`;
-    //     } else {
-    //         currentSliderId.textContent = slideIndex;
-    //     }
-    // }
+    getStaticInformation('#gender', 'calculating__choose-item_active');
+    getStaticInformation('.calculating__choose_big', 'calculating__choose-item_active');     
 
-    // showSlides(slideIndex);
+    function getDynamicInformation(selector) {
+        const input = document.querySelector(selector);
 
-    // function changeSlide(n){
-    //     showSlides(slideIndex += n); 
-    // }
+        input.addEventListener('input', () => {
+            switch(input.getAttribute('id')) {
+                case 'height':
+                    height = +input.value;
+                    break;
+                case 'weight':
+                    weight = +input.value;
+                    break;
+                case 'age':
+                    age = +input.value;
+                    break;
+            }
+            calcTotal();
+        });
+    }
 
-    // nextSlide.addEventListener('click', () => {
-    //     changeSlide(1);
-    // });
-
-    // prevSlide.addEventListener('click', () => {
-    //     changeSlide(-1);
-    // });
+    getDynamicInformation('#weight');
+    getDynamicInformation('#height');
+    getDynamicInformation('#age');
 });
